@@ -1,0 +1,34 @@
+WEB SCRAPING
+    Libs:
+        -Scrapy
+        -Playwright
+    HTML (Info):
+        Main Url:
+        <div class "center"
+        <a href"/meal/"
+            <div class "center"
+            <h1 MEAL NAME ---> Yemek Adı
+            !!! Check for the meal tags !!!
+            <table<tbody<td (?)
+            <a href"/ingredient/" ----> 2 seçenek: 1)Daha çok parslayıp tarif düzeyinde isim / 2)Malzeme sitesine atlayıp başlık çekmek (daha doğru)
+            !!! Burda malzemeler yemek listesinde çekilip .join - tarif // Malzeme sitesinden başlık ----> Edge for Database !!!
+        <h2 Instruction ----> yapılış normal bir string halinde ama 1*
+        def parse
+
+        def parse_recipe
+        def parse_ing
+DATABASE
+    Libs:
+        -FalkorDB (20) (Docker)
+        -MongoDB
+        -Neo4J
+        -Redis
+    PROCEDURE:
+        QUERY FOR:
+
+            ...
+USER EXP
+    Libs:
+        -argparse
+        -abstractClasseargparse
+        -abstractClasses
