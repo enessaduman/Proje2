@@ -105,10 +105,10 @@ class SpiderMeals(scrapy.Spider):
         try:
             yield {
                 'TYPE': 'MEAL',
-                'Food Name': food_name,
-                'Ingredients Used': ingredient_names,
+                'Food_Name': food_name,
+                'Ingredients_Used': ingredient_names,
                 'Instructions': instruction,
-                'Meal URL': response.url,
+                'Meal_URL': response.url,
             }
         except AttributeError as e:
             self.logger.error(f"AttributeError yielding meal in parse_meal(): {e}")
@@ -138,7 +138,7 @@ class SpiderMeals(scrapy.Spider):
         try:
             yield {
                 'TYPE': 'INGREDIENT',
-                'Food Name': ingredient_name,
+                'Food_Name': ingredient_name,
             }
         except AttributeError as e:
             self.logger.error(f"AttributeError yielding ingredient in parse_ingre(): {e}")
@@ -147,7 +147,7 @@ class SpiderMeals(scrapy.Spider):
 if __name__ == "__main__":
     process = CrawlerProcess(settings={
         'FEEDS': {
-            'yemekler1.json': {
+            'foods1.json': {
                 'format': 'json',
                 'encoding': 'utf-8',
                 'indent': 4,
