@@ -53,9 +53,9 @@ for block in ingredients:
 
     cleaned_name_str = "".join(cleaned_words)
     for word in cleaned_name_str.split():
-        lemmatized_word = L.lemmatize(word.lower())
-        if len(lemmatized_word) > 1:
-            ingredient_names.add(lemmatized_word)
+        normalized_word = L.lemmatize(word.lower()).capitalize()
+        if len(normalized_word) > 1:
+            ingredient_names.add(normalized_word)
 
 # ----------------------
 # 2. Matching and Comparing
@@ -80,9 +80,9 @@ for recipe in recipes:
 
         cleaned_portion = "".join(cleaned_chars)
         for word in cleaned_portion.split():
-            lemmatized_word = L.lemmatize(word.lower())
-            if len(lemmatized_word) > 1:
-                portion_words.add(lemmatized_word)
+            normalized_word = L.lemmatize(word.lower()).capitalize()
+            if len(normalized_word) > 1:
+                portion_words.add(normalized_word)
 
     found_ingredient_keywords = ingredient_names.intersection(portion_words)
 

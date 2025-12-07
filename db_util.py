@@ -11,16 +11,20 @@ from nltk.stem import WordNetLemmatizer
 L = WordNetLemmatizer()
 db = FalkorDB(host='localhost', port=6379)
 
+
 def is_ingredient(temp_ingredient: str):
     """Checks if the given ingredient exists in the database."""
     graph = db.select_graph("RECIPIES")
 
-    # Clean and standardized input
-    temp_ingredient = L.lemmatize(temp_ingredient.lower().capitalize())
+    input_to_check = L.lemmatize(temp_ingredient.lower().capitalize())  # <--- Bu haliyle arama yapılacak
 
-    ingredient_search_query = "MATCH (i:Ingredient {name: $temp_ingredient}) RETURN i"
+    ingredient_search_query = """
+        MATCH (i:Ingredient) 
+        WHERE toLower(i.name) = toLower($temp_ingredient) 
+        RETURN i
+    """
 
-    results = graph.query(ingredient_search_query, {'temp_ingredient': temp_ingredient})
+    results = graph.query(ingredient_search_query, {'temp_ingredient': input_to_check})
     return len(results.result_set) > 0
 
 def find_similar_ingredients(temp_ingredient: str):
@@ -32,9 +36,9 @@ def find_similar_ingredients(temp_ingredient: str):
     temp_ingredient = L.lemmatize(temp_ingredient.lower())
 
     retrieve_ingredient_query = """
-        MATCH (i:Ingredient)
-        WHERE i.name =~ '(?i).*' + $temp_ingredient + '.*'
-        RETURN i.name AS ingredient_name
+        MATCH (i:Ingredient) 
+        WHERE toLower(i.name) CONTAINS toLower($temp_ingredient)
+        RETURN i.name
     """
     results = graph.query(retrieve_ingredient_query, {'temp_ingredient': temp_ingredient})
 
@@ -42,7 +46,7 @@ def find_similar_ingredients(temp_ingredient: str):
         print(f"No similar ingredients found for '{temp_ingredient}'")
         return None
     # List comprehension for cleaner code
-    return [record['ingredient_name'] for record in results.result_set]
+    return [record[0] for record in results.result_set]
 
 def list_recipies(input_ing_list: List[str]):
     """
@@ -52,9 +56,10 @@ def list_recipies(input_ing_list: List[str]):
     graph = db.select_graph("RECIPIES")
 
     search_recipe_query = """
-        MATCH (rec:Recipe)
-        WHERE ALL(ingName IN $input_ingredients 
-                  WHERE EXISTS((rec)-[:HAS_THE_ITEM]->(:Ingredient {name: ingName})))
+        MATCH (rec:Recipe)-[:HAS_THE_ITEM]->(i:Ingredient)
+        WHERE i.name IN $input_ingredients
+        WITH rec, COUNT(i) AS matchedCount, size($input_ingredients) AS requiredCount
+        WHERE matchedCount = requiredCount
         MATCH (rec)-[:MADE_WITH]->(ingP:IngredientP)
         RETURN rec.name AS RecipeName, 
                collect(ingP.ingPortion) AS FullIngredientsList
@@ -68,8 +73,8 @@ def list_recipies(input_ing_list: List[str]):
         return None
     recipe_list = [
         {
-            'Food Name': result['RecipeName'],
-            'Full Ingredients': result['FullIngredientsList']
+            'Food Name': result[0],
+            'Full Ingredients': result[1]
         }
         for result in results.result_set
     ]
@@ -96,6 +101,6 @@ def recipe_details(recipe_name: str) -> Optional[Dict[str, Any]]:
     result = results.result_set[0]
     return {
         'Food Name': recipe_name,
-        'Instructions': result['Instructions'],
-        'Ingredients': result['IngredientsPortion']
+        'Instructions': result[0],
+        'Ingredients': result[1]
     }
