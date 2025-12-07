@@ -32,3 +32,10 @@ USER EXP
         -argparse
         -abstractClasseargparse
         -abstractClasses
+
+INSTALLATION:
+pip install nltk
+pip install docker
+pip install falkordb
+pip install scrappy
+REQUIRE: Docker Engine!
