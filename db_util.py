@@ -16,7 +16,7 @@ def is_ingredient(temp_ingredient: str):
     """Checks if the given ingredient exists in the database."""
     graph = db.select_graph("RECIPIES")
 
-    input_to_check = L.lemmatize(temp_ingredient.lower().capitalize())  # <--- Bu haliyle arama yapılacak
+    input_to_check = L.lemmatize(temp_ingredient.lower().capitalize())
 
     ingredient_search_query = """
         MATCH (i:Ingredient) 
@@ -46,7 +46,11 @@ def find_similar_ingredients(temp_ingredient: str):
         print(f"No similar ingredients found for '{temp_ingredient}'")
         return None
     # List comprehension for cleaner code
-    return [record[0] for record in results.result_set]
+    ingredient_list=[]
+    for record in results.result_set:
+        ingredient_list.append(record[0])
+    return ingredient_list
+
 
 def list_recipies(input_ing_list: List[str]):
     """
@@ -57,16 +61,14 @@ def list_recipies(input_ing_list: List[str]):
 
     search_recipe_query = """
         MATCH (rec:Recipe)-[:HAS_THE_ITEM]->(i:Ingredient)
-        WHERE i.name IN $input_ingredients
+        WHERE toLower(i.name) IN $input_ingredients
         WITH rec, COUNT(i) AS matchedCount, size($input_ingredients) AS requiredCount
         WHERE matchedCount = requiredCount
         MATCH (rec)-[:MADE_WITH]->(ingP:IngredientP)
         RETURN rec.name AS RecipeName, 
                collect(ingP.ingPortion) AS FullIngredientsList
     """
-
-    # List comprehension for processing input list
-    lemmatized_input_list = [L.lemmatize(ing.lower().capitalize()) for ing in input_ing_list]
+    lemmatized_input_list = [L.lemmatize(ing.lower()) for ing in input_ing_list]
     results = graph.query(search_recipe_query, {'input_ingredients': lemmatized_input_list})
 
     if len(results.result_set) == 0:
@@ -80,27 +82,30 @@ def list_recipies(input_ing_list: List[str]):
     ]
     return recipe_list
 
+
 def recipe_details(recipe_name: str) -> Optional[Dict[str, Any]]:
     """
     Retrieves the full instructions and ingredient portions for a specific recipe.
+    Case-insensitive*
     """
     graph = db.select_graph("RECIPIES")
-    standardized_name = recipe_name.lower().capitalize()
 
     detailed_query = """
-        MATCH (rec:Recipe {name: $r_name})
+        MATCH (rec:Recipe)
+        WHERE toLower(rec.name) = toLower($r_name)
         MATCH (rec)-[:MADE_WITH]->(ingP:IngredientP)
         RETURN rec.instructions AS Instructions, 
                collect(ingP.ingPortion) AS IngredientsPortion
     """
-    results = graph.query(detailed_query, {'r_name': standardized_name})
+
+    results = graph.query(detailed_query, {'r_name': recipe_name.lower()})
 
     if len(results.result_set) == 0:
         return None
 
     result = results.result_set[0]
     return {
-        'Food Name': recipe_name,
+        'Food Name': result[0] if hasattr(result, '__getitem__') else recipe_name,  # Garantiye almak için
         'Instructions': result[0],
         'Ingredients': result[1]
     }

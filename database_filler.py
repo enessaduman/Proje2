@@ -18,7 +18,12 @@ try:
     graph = db.select_graph("RECIPIES")
 except RedisConnectionError as e:
     sys.exit(f"Critical Error: Database connection failed. {e}")
-
+print("Cleaning the any existing database...")
+try:
+    graph.delete()
+    print("✅ Cleanup DONE!.")
+except Exception:
+    print("ℹ️ No data to clean up (It might be already empty).")
 # Safely reading and retrieving the JSON
 try:
     with open('foods1.json', 'r', encoding="utf-8") as f:
@@ -36,14 +41,13 @@ for block in raw_recipe_ing_data:
         ingredients.append(block)
 
 # ----------------------
-# 1. Extracting raw ingredient name from portioned ones
+# 1. Extracting raw ingredient name
 # ----------------------
 ingredient_names = set()
 for block in ingredients:
     ing_name = block.get('Food_Name', '')
     if not ing_name or not isinstance(ing_name, str):
         continue
-
     cleaned_words = []
     for char in ing_name:
         if char.isalpha() or char.isspace():
@@ -51,48 +55,43 @@ for block in ingredients:
         else:
             cleaned_words.append(' ')
 
-    cleaned_name_str = "".join(cleaned_words)
-    for word in cleaned_name_str.split():
-        normalized_word = L.lemmatize(word.lower()).capitalize()
-        if len(normalized_word) > 1:
-            ingredient_names.add(normalized_word)
+    cleaned_name_str = "".join(cleaned_words).strip()
 
+    if len(cleaned_name_str) > 1:
+        normalized_full_name = " ".join([word.lower().capitalize() for word in cleaned_name_str.split()])
+        ingredient_names.add(normalized_full_name)
 # ----------------------
 # 2. Matching and Comparing
 # ----------------------
 recipe_raw_ing_lst = []
+sorted_ingredients = sorted(list(ingredient_names), key=len, reverse=True)
+
+print("Eşleşme işlemi başlatılıyor... (Bu biraz zaman alabilir)")
 
 for recipe in recipes:
     recipe_ing_dict = {}
     IngredientsP = recipe.get('Ingredients_Used', [])
-    portion_words = set()
+    found_ingredients = set()
 
     for portion_str in IngredientsP:
         if not portion_str or not isinstance(portion_str, str):
             continue
 
-        cleaned_chars = []
-        for char in portion_str:
-            if char.isalpha() or char.isspace():
-                cleaned_chars.append(char)
-            else:
-                cleaned_chars.append(' ')
+        cleaned_chars = [char if char.isalpha() or char.isspace() else ' ' for char in portion_str]
+        cleaned_portion_str = "".join(cleaned_chars).lower()
 
-        cleaned_portion = "".join(cleaned_chars)
-        for word in cleaned_portion.split():
-            normalized_word = L.lemmatize(word.lower()).capitalize()
-            if len(normalized_word) > 1:
-                portion_words.add(normalized_word)
+        for known_ing in sorted_ingredients:
+            if known_ing.lower() in cleaned_portion_str:
+                found_ingredients.add(known_ing)
 
-    found_ingredient_keywords = ingredient_names.intersection(portion_words)
+                break
 
-    if found_ingredient_keywords:
+    if found_ingredients:
         recipe_ing_dict['Food_Name'] = recipe['Food_Name']
-        recipe_ing_dict['Raw_Ingredients'] = list(found_ingredient_keywords)
+        recipe_ing_dict['Raw_Ingredients'] = list(found_ingredients)
         recipe_raw_ing_lst.append(recipe_ing_dict)
     else:
-        print(f"Warning: No ingredients found for {recipe.get('Food_Name', 'Unknown')}")
-        # sys.exit(1)
+        pass
 # ----------------------
 #   DEFINING QUERIES
 # -----------------------
