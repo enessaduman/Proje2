@@ -84,4 +84,14 @@ Try again with the specific ones listed above.
 ````
 Other than that it basically list the recipies and ask for you to choose one.
 
+## File Structure 📁:
+````commandline
+.
+├── scrap_web.py           # Web Scpraing Module
+├── database_filler.py     # Raw Data -> Falkor DB
+├── db_util.py             # Database operation functions
+├── find_recipe.py         # 🚀 Main Script that user integrated
+├── foods1.json            # Temporary data bridge between web and DB
+├── Saved_Recipes.txt      # 📄 OUTPUT TEXT FILE
+````
 ### Thank you for using our servise, HAPPY COOKING 🧑‍🍳
