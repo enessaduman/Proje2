@@ -66,7 +66,7 @@ for block in ingredients:
 recipe_raw_ing_lst = []
 sorted_ingredients = sorted(list(ingredient_names), key=len, reverse=True)
 
-print("Eşleşme işlemi başlatılıyor... (Bu biraz zaman alabilir)")
+print("Matching Phase... (might take some time)")
 
 for recipe in recipes:
     recipe_ing_dict = {}
